@@ -40,7 +40,16 @@ export default function HomePage() {
   const [activeSection, setActiveSection] = useState('hero');
 
   useEffect(() => {
+    let lastScrollTime = 0;
+    const throttleDelay = 100; // milliseconds
+
     const handleScroll = () => {
+      const now = Date.now();
+      if (now - lastScrollTime < throttleDelay) {
+        return;
+      }
+      lastScrollTime = now;
+
       const sections = ['hero', 'about', 'projects', 'contact'];
       const scrollPosition = window.scrollY + 100;
 
@@ -86,7 +95,7 @@ export default function HomePage() {
                 <button
                   key={section}
                   onClick={() => scrollToSection(section)}
-                  className={`capitalize hover:text-blue-600 dark:hover:text-blue-400 transition-colors ${
+                  className={`hover:text-blue-600 dark:hover:text-blue-400 transition-colors ${
                     activeSection === section
                       ? 'text-blue-600 dark:text-blue-400 font-semibold'
                       : ''
