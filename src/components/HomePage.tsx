@@ -37,12 +37,7 @@ const socialLinks = [
 ];
 
 export default function HomePage() {
-  const [mounted, setMounted] = useState(false);
   const [activeSection, setActiveSection] = useState('hero');
-
-  useEffect(() => {
-    setMounted(true);
-  }, []);
 
   useEffect(() => {
     const handleScroll = () => {
@@ -73,10 +68,6 @@ export default function HomePage() {
       element.scrollIntoView({ behavior: 'smooth' });
     }
   };
-
-  if (!mounted) {
-    return null;
-  }
 
   return (
     <div className="min-h-screen bg-white dark:bg-gray-950 text-gray-900 dark:text-gray-100">
