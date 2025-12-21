@@ -3,8 +3,8 @@ import Script from "next/script";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "拼图游戏 - Puzzle Game",
-  description: "一个有趣的拼图游戏，支持低中高三个难度",
+  title: "个人主页 - Personal Homepage",
+  description: "欢迎来到我的个人主页 - Welcome to my personal homepage",
 };
 
 export default function RootLayout({

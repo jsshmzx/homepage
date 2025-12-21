@@ -1,10 +1,5 @@
-import PuzzleGame from "@/components/PuzzleGame";
-
-const puzzleImages = [
-  "/images/puzzle1.svg",
-  "/images/puzzle2.svg",
-];
+import HomePage from "@/components/HomePage";
 
 export default function Home() {
-  return <PuzzleGame imageUrls={puzzleImages} />;
+  return <HomePage />;
 }

@@ -1,21 +1,19 @@
-# 🧩 拼图游戏 (Puzzle Game)
+# 🏠 个人主页 (Personal Homepage)
 
-一个使用 Next.js 开发的有趣拼图游戏网站，支持三个难度级别。
+一个使用 Next.js 开发的现代化个人主页网站，采用简洁优雅的设计风格。
 
 ## 功能特性
 
-- **三种难度级别**：
-  - 简单 (3x3) - 9 块拼图
-  - 中等 (4x4) - 16 块拼图
-  - 困难 (5x5) - 25 块拼图
-
-- **多张拼图图片**：支持切换不同的拼图图片
-
-- **游戏统计**：显示移动次数
-
-- **参考图片**：游戏时显示原图作为参考
-
-- **Umami 统计集成**：深度集成 Umami 事件追踪功能
+- **响应式设计**：完美适配桌面端和移动端
+- **流畅导航**：平滑滚动和活跃状态指示
+- **多个板块**：
+  - 首页介绍
+  - 关于我
+  - 项目展示
+  - 联系方式
+- **深色模式支持**：自适应系统主题偏好
+- **优雅动画**：流畅的页面过渡效果
+- **Umami 统计集成**（可选）：网站访问数据追踪
 
 ## 开始使用
 
@@ -31,7 +29,7 @@ npm install
 npm run dev
 ```
 
-打开 [http://localhost:3000](http://localhost:3000) 查看游戏。
+打开 [http://localhost:3000](http://localhost:3000) 查看网站。
 
 ### 构建生产版本
 
@@ -40,9 +38,24 @@ npm run build
 npm start
 ```
 
+## 自定义内容
+
+### 修改个人信息
+
+编辑 `src/components/HomePage.tsx` 文件：
+
+- 更新项目列表（`projects` 数组）
+- 更新社交链接（`socialLinks` 数组）
+- 修改关于我的内容
+- 自定义技能标签
+
+### 修改样式
+
+网站使用 Tailwind CSS，可以直接在组件中修改样式类，或在 `src/app/globals.css` 中添加自定义样式。
+
 ## 环境变量
 
-复制 `.env.example` 为 `.env.local` 并配置以下环境变量：
+复制 `.env.example` 为 `.env.local` 并配置以下环境变量（可选）：
 
 ```bash
 # Umami 统计配置
@@ -50,38 +63,24 @@ NEXT_PUBLIC_UMAMI_WEBSITE_ID=your-website-id
 NEXT_PUBLIC_UMAMI_SRC=https://analytics.yourdomain.com/script.js
 ```
 
-### Umami 事件追踪
-
-游戏集成了以下 Umami 事件追踪：
-
-| 事件名称 | 描述 | 参数 |
-|---------|------|------|
-| `game_start` | 游戏开始 | difficulty, gridSize, imageIndex |
-| `game_complete` | 游戏完成 | difficulty, gridSize, moves, durationSeconds, imageIndex |
-| `difficulty_change` | 难度切换 | from, to, gridSize |
-| `image_select` | 图片选择 | imageIndex, previousImage |
-| `piece_move_milestone` | 每5次移动 | moves, difficulty, imageIndex |
-| `play_again` | 再玩一次 | previousMoves, difficulty |
-
 ## 技术栈
 
 - [Next.js 16](https://nextjs.org/) - React 框架
 - [TypeScript](https://www.typescriptlang.org/) - 类型安全
-- [Tailwind CSS](https://tailwindcss.com/) - 样式框架
+- [Tailwind CSS 4](https://tailwindcss.com/) - 样式框架
+- [React 19](https://react.dev/) - UI 库
 - [Umami](https://umami.is/) - 网站统计（可选）
 
-## 添加自定义拼图图片
+## 部署
 
-将图片文件放入 `public/images/` 目录，然后在 `src/app/page.tsx` 中更新 `puzzleImages` 数组：
+本项目可以轻松部署到各种平台：
 
-```typescript
-const puzzleImages = [
-  "/images/puzzle1.svg",
-  "/images/puzzle2.svg",
-  "/images/your-new-image.jpg", // 添加新图片
-];
-```
+- [Vercel](https://vercel.com/) （推荐）
+- [Netlify](https://www.netlify.com/)
+- [Railway](https://railway.app/)
+- 任何支持 Node.js 的托管服务
 
 ## 许可证
 
 MIT
+
