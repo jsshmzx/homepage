@@ -3,8 +3,8 @@ import Script from "next/script";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "拼图游戏 - Puzzle Game",
-  description: "一个有趣的拼图游戏，支持低中高三个难度",
+  title: "江苏省海门中学 - Haimen Middle School",
+  description: "江苏省海门中学 - Haimen Middle School, Jiangsu Province",
 };
 
 export default function RootLayout({

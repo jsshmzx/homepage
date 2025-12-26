@@ -1,21 +1,14 @@
-# 🧩 拼图游戏 (Puzzle Game)
+# 🏫 江苏省海门中学主页
 
-一个使用 Next.js 开发的有趣拼图游戏网站，支持三个难度级别。
+一个使用 Next.js 开发的交互式主页，具有动态落球效果。
 
 ## 功能特性
 
-- **三种难度级别**：
-  - 简单 (3x3) - 9 块拼图
-  - 中等 (4x4) - 16 块拼图
-  - 困难 (5x5) - 25 块拼图
-
-- **多张拼图图片**：支持切换不同的拼图图片
-
-- **游戏统计**：显示移动次数
-
-- **参考图片**：游戏时显示原图作为参考
-
-- **Umami 统计集成**：深度集成 Umami 事件追踪功能
+- **动态落球动画**：页面加载时，带有文字的彩色球体从顶部落下
+- **物理引擎**：球体具有重力、弹跳和碰撞效果
+- **响应式设计**：完美适配桌面端和移动端
+- **深色模式支持**：自适应系统主题偏好
+- **文字展示**：球体包含"江苏省海门中学"及其英文名称的文字
 
 ## 开始使用
 
@@ -31,7 +24,7 @@ npm install
 npm run dev
 ```
 
-打开 [http://localhost:3000](http://localhost:3000) 查看游戏。
+打开 [http://localhost:3000](http://localhost:3000) 查看网站。
 
 ### 构建生产版本
 
@@ -40,48 +33,58 @@ npm run build
 npm start
 ```
 
-## 环境变量
+## 自定义内容
 
-复制 `.env.example` 为 `.env.local` 并配置以下环境变量：
+### 修改球体文字
 
-```bash
-# Umami 统计配置
-NEXT_PUBLIC_UMAMI_WEBSITE_ID=your-website-id
-NEXT_PUBLIC_UMAMI_SRC=https://analytics.yourdomain.com/script.js
+编辑 `src/components/HomePage.tsx` 文件中的 `textChars` 数组：
+
+```typescript
+const textChars = [
+  '江', '苏', '省', '海', '门', '中', '学',
+  'H', 'a', 'i', 'm', 'e', 'n',
+  // ... 添加或修改文字
+];
 ```
 
-### Umami 事件追踪
+### 修改球体颜色
 
-游戏集成了以下 Umami 事件追踪：
+编辑 `colors` 数组自定义球体颜色：
 
-| 事件名称 | 描述 | 参数 |
-|---------|------|------|
-| `game_start` | 游戏开始 | difficulty, gridSize, imageIndex |
-| `game_complete` | 游戏完成 | difficulty, gridSize, moves, durationSeconds, imageIndex |
-| `difficulty_change` | 难度切换 | from, to, gridSize |
-| `image_select` | 图片选择 | imageIndex, previousImage |
-| `piece_move_milestone` | 每5次移动 | moves, difficulty, imageIndex |
-| `play_again` | 再玩一次 | previousMoves, difficulty |
+```typescript
+const colors = [
+  '#3b82f6', // blue
+  '#8b5cf6', // purple
+  // ... 添加更多颜色
+];
+```
+
+### 调整球体数量
+
+在 `useEffect` 中修改 `numBalls` 变量：
+
+```typescript
+const numBalls = 30; // 调整数量
+```
 
 ## 技术栈
 
 - [Next.js 16](https://nextjs.org/) - React 框架
 - [TypeScript](https://www.typescriptlang.org/) - 类型安全
-- [Tailwind CSS](https://tailwindcss.com/) - 样式框架
-- [Umami](https://umami.is/) - 网站统计（可选）
+- [Tailwind CSS 4](https://tailwindcss.com/) - 样式框架
+- [React 19](https://react.dev/) - UI 库
+- HTML5 Canvas - 2D 图形渲染
 
-## 添加自定义拼图图片
+## 部署
 
-将图片文件放入 `public/images/` 目录，然后在 `src/app/page.tsx` 中更新 `puzzleImages` 数组：
+本项目可以轻松部署到各种平台：
 
-```typescript
-const puzzleImages = [
-  "/images/puzzle1.svg",
-  "/images/puzzle2.svg",
-  "/images/your-new-image.jpg", // 添加新图片
-];
-```
+- [Vercel](https://vercel.com/) （推荐）
+- [Netlify](https://www.netlify.com/)
+- [Railway](https://railway.app/)
+- 任何支持 Node.js 的托管服务
 
 ## 许可证
 
 MIT
+
