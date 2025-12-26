@@ -1,19 +1,14 @@
-# 🏠 个人主页 (Personal Homepage)
+# 🏫 江苏省海门中学主页
 
-一个使用 Next.js 开发的现代化个人主页网站，采用简洁优雅的设计风格。
+一个使用 Next.js 开发的交互式主页，具有动态落球效果。
 
 ## 功能特性
 
+- **动态落球动画**：页面加载时，带有文字的彩色球体从顶部落下
+- **物理引擎**：球体具有重力、弹跳和碰撞效果
 - **响应式设计**：完美适配桌面端和移动端
-- **流畅导航**：平滑滚动和活跃状态指示
-- **多个板块**：
-  - 首页介绍
-  - 关于我
-  - 项目展示
-  - 联系方式
 - **深色模式支持**：自适应系统主题偏好
-- **优雅动画**：流畅的页面过渡效果
-- **Umami 统计集成**（可选）：网站访问数据追踪
+- **文字展示**：球体包含"江苏省海门中学"及其英文名称的文字
 
 ## 开始使用
 
@@ -40,27 +35,36 @@ npm start
 
 ## 自定义内容
 
-### 修改个人信息
+### 修改球体文字
 
-编辑 `src/components/HomePage.tsx` 文件：
+编辑 `src/components/HomePage.tsx` 文件中的 `textChars` 数组：
 
-- 更新项目列表（`projects` 数组）
-- 更新社交链接（`socialLinks` 数组）
-- 修改关于我的内容
-- 自定义技能标签
+```typescript
+const textChars = [
+  '江', '苏', '省', '海', '门', '中', '学',
+  'H', 'a', 'i', 'm', 'e', 'n',
+  // ... 添加或修改文字
+];
+```
 
-### 修改样式
+### 修改球体颜色
 
-网站使用 Tailwind CSS，可以直接在组件中修改样式类，或在 `src/app/globals.css` 中添加自定义样式。
+编辑 `colors` 数组自定义球体颜色：
 
-## 环境变量
+```typescript
+const colors = [
+  '#3b82f6', // blue
+  '#8b5cf6', // purple
+  // ... 添加更多颜色
+];
+```
 
-复制 `.env.example` 为 `.env.local` 并配置以下环境变量（可选）：
+### 调整球体数量
 
-```bash
-# Umami 统计配置
-NEXT_PUBLIC_UMAMI_WEBSITE_ID=your-website-id
-NEXT_PUBLIC_UMAMI_SRC=https://analytics.yourdomain.com/script.js
+在 `useEffect` 中修改 `numBalls` 变量：
+
+```typescript
+const numBalls = 30; // 调整数量
 ```
 
 ## 技术栈
@@ -69,7 +73,7 @@ NEXT_PUBLIC_UMAMI_SRC=https://analytics.yourdomain.com/script.js
 - [TypeScript](https://www.typescriptlang.org/) - 类型安全
 - [Tailwind CSS 4](https://tailwindcss.com/) - 样式框架
 - [React 19](https://react.dev/) - UI 库
-- [Umami](https://umami.is/) - 网站统计（可选）
+- HTML5 Canvas - 2D 图形渲染
 
 ## 部署
 

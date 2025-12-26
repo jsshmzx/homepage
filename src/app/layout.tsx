@@ -3,8 +3,8 @@ import Script from "next/script";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "个人主页 - Personal Homepage",
-  description: "欢迎来到我的个人主页 - Welcome to my personal homepage",
+  title: "江苏省海门中学 - Haimen Middle School",
+  description: "江苏省海门中学 - Haimen Middle School, Jiangsu Province",
 };
 
 export default function RootLayout({

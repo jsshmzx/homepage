@@ -1,275 +1,199 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 
-interface Project {
-  title: string;
-  description: string;
-  link?: string;
-  tags: string[];
+interface Ball {
+  x: number;
+  y: number;
+  vx: number;
+  vy: number;
+  radius: number;
+  text: string;
+  color: string;
 }
 
-const projects: Project[] = [
-  {
-    title: '项目一',
-    description: '这是一个示例项目的描述，展示了主要功能和技术栈。',
-    link: '#',
-    tags: ['React', 'TypeScript', 'Next.js'],
-  },
-  {
-    title: '项目二',
-    description: '另一个有趣的项目，使用现代化的技术栈构建。',
-    link: '#',
-    tags: ['Node.js', 'Database', 'API'],
-  },
-  {
-    title: '项目三',
-    description: '开源贡献或个人作品，展示创造力和技术能力。',
-    link: '#',
-    tags: ['Design', 'Frontend', 'UI/UX'],
-  },
+// Text from "江苏省海门中学" and "Haimen Middle School, Jiangsu Province"
+const textChars = [
+  '江', '苏', '省', '海', '门', '中', '学',
+  'H', 'a', 'i', 'm', 'e', 'n',
+  'M', 'i', 'd', 'd', 'l', 'e',
+  'S', 'c', 'h', 'o', 'o', 'l',
+  'J', 'i', 'a', 'n', 'g', 's', 'u',
+  'P', 'r', 'o', 'v', 'i', 'n', 'c', 'e'
 ];
 
-const socialLinks = [
-  { name: 'GitHub', url: 'https://github.com', icon: '💻' },
-  { name: 'Email', url: 'mailto:example@email.com', icon: '📧' },
-  { name: 'Twitter', url: 'https://twitter.com', icon: '🐦' },
+const colors = [
+  '#3b82f6', // blue
+  '#8b5cf6', // purple
+  '#ec4899', // pink
+  '#f59e0b', // amber
+  '#10b981', // green
+  '#06b6d4', // cyan
 ];
 
 export default function HomePage() {
-  const [activeSection, setActiveSection] = useState('hero');
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+  const ballsRef = useRef<Ball[]>([]);
+  const animationFrameRef = useRef<number | undefined>(undefined);
 
   useEffect(() => {
-    let lastScrollTime = 0;
-    const throttleDelay = 100; // milliseconds
+    const canvas = canvasRef.current;
+    if (!canvas) return;
 
-    const handleScroll = () => {
-      const now = Date.now();
-      if (now - lastScrollTime < throttleDelay) {
-        return;
-      }
-      lastScrollTime = now;
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
 
-      const sections = ['hero', 'about', 'projects', 'contact'];
-      const scrollPosition = window.scrollY + 100;
+    // Set canvas size
+    const resizeCanvas = () => {
+      canvas.width = window.innerWidth;
+      canvas.height = window.innerHeight;
+    };
+    resizeCanvas();
+    window.addEventListener('resize', resizeCanvas);
 
-      for (const section of sections) {
-        const element = document.getElementById(section);
-        if (element) {
-          const offsetTop = element.offsetTop;
-          const offsetBottom = offsetTop + element.offsetHeight;
+    // Initialize balls
+    const numBalls = 30;
+    ballsRef.current = Array.from({ length: numBalls }, () => {
+      const radius = 30 + Math.random() * 40;
+      return {
+        x: Math.random() * canvas.width,
+        y: -radius - Math.random() * 500, // Start above screen
+        vx: (Math.random() - 0.5) * 2,
+        vy: Math.random() * 2 + 1,
+        radius,
+        text: textChars[Math.floor(Math.random() * textChars.length)],
+        color: colors[Math.floor(Math.random() * colors.length)],
+      };
+    });
 
-          if (scrollPosition >= offsetTop && scrollPosition < offsetBottom) {
-            setActiveSection(section);
-            break;
-          }
+    // Animation loop
+    const animate = () => {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+      ballsRef.current.forEach((ball) => {
+        // Update position
+        ball.x += ball.vx;
+        ball.y += ball.vy;
+
+        // Add gravity
+        ball.vy += 0.1;
+
+        // Bounce off walls
+        if (ball.x + ball.radius > canvas.width || ball.x - ball.radius < 0) {
+          ball.vx *= -0.8;
+          ball.x = Math.max(ball.radius, Math.min(canvas.width - ball.radius, ball.x));
         }
-      }
+
+        // Bounce off floor
+        if (ball.y + ball.radius > canvas.height) {
+          ball.vy *= -0.7;
+          ball.y = canvas.height - ball.radius;
+          ball.vx *= 0.95; // Add friction
+        }
+
+        // Ball collision detection
+        ballsRef.current.forEach((otherBall) => {
+          if (ball === otherBall) return;
+          
+          const dx = otherBall.x - ball.x;
+          const dy = otherBall.y - ball.y;
+          const distance = Math.sqrt(dx * dx + dy * dy);
+          
+          if (distance < ball.radius + otherBall.radius) {
+            const angle = Math.atan2(dy, dx);
+            const sin = Math.sin(angle);
+            const cos = Math.cos(angle);
+            
+            // Rotate positions
+            const x1 = 0;
+            const y1 = 0;
+            const x2 = dx * cos + dy * sin;
+            const y2 = dy * cos - dx * sin;
+            
+            // Rotate velocities
+            let vx1 = ball.vx * cos + ball.vy * sin;
+            const vy1 = ball.vy * cos - ball.vx * sin;
+            let vx2 = otherBall.vx * cos + otherBall.vy * sin;
+            const vy2 = otherBall.vy * cos - otherBall.vx * sin;
+            
+            // Collision reaction
+            const vxTotal = vx1 - vx2;
+            vx1 = ((ball.radius - otherBall.radius) * vx1 + 2 * otherBall.radius * vx2) / 
+                  (ball.radius + otherBall.radius);
+            vx2 = vxTotal + vx1;
+            
+            // Update positions to prevent overlap
+            const overlap = ball.radius + otherBall.radius - Math.abs(x2 - x1);
+            const x1Final = x1 + (vx1 < 0 ? -overlap/2 : overlap/2);
+            const x2Final = x2 + (vx2 < 0 ? -overlap/2 : overlap/2);
+            
+            // Rotate back
+            otherBall.x = ball.x + (x2Final * cos - y2 * sin);
+            otherBall.y = ball.y + (y2 * cos + x2Final * sin);
+            ball.x = ball.x + (x1Final * cos - y1 * sin);
+            ball.y = ball.y + (y1 * cos + x1Final * sin);
+            
+            ball.vx = vx1 * cos - vy1 * sin;
+            ball.vy = vy1 * cos + vx1 * sin;
+            otherBall.vx = vx2 * cos - vy2 * sin;
+            otherBall.vy = vy2 * cos + vx2 * sin;
+          }
+        });
+
+        // Draw ball
+        ctx.beginPath();
+        ctx.arc(ball.x, ball.y, ball.radius, 0, Math.PI * 2);
+        ctx.fillStyle = ball.color;
+        ctx.fill();
+        ctx.strokeStyle = 'rgba(255, 255, 255, 0.3)';
+        ctx.lineWidth = 2;
+        ctx.stroke();
+
+        // Draw text
+        ctx.fillStyle = 'white';
+        ctx.font = `bold ${ball.radius * 0.8}px Arial`;
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText(ball.text, ball.x, ball.y);
+      });
+
+      animationFrameRef.current = requestAnimationFrame(animate);
     };
 
-    window.addEventListener('scroll', handleScroll);
-    return () => window.removeEventListener('scroll', handleScroll);
+    animate();
+
+    return () => {
+      window.removeEventListener('resize', resizeCanvas);
+      if (animationFrameRef.current) {
+        cancelAnimationFrame(animationFrameRef.current);
+      }
+    };
   }, []);
 
-  const scrollToSection = (sectionId: string) => {
-    const element = document.getElementById(sectionId);
-    if (element) {
-      element.scrollIntoView({ behavior: 'smooth' });
-    }
-  };
-
   return (
-    <div className="min-h-screen bg-white dark:bg-gray-950 text-gray-900 dark:text-gray-100">
-      {/* Navigation */}
-      <nav className="fixed top-0 left-0 right-0 bg-white/80 dark:bg-gray-950/80 backdrop-blur-md z-50 border-b border-gray-200 dark:border-gray-800">
-        <div className="max-w-4xl mx-auto px-6 py-4">
-          <div className="flex justify-between items-center">
-            <button
-              onClick={() => scrollToSection('hero')}
-              className="text-xl font-bold hover:text-blue-600 dark:hover:text-blue-400 transition-colors"
-            >
-              主页
-            </button>
-            <div className="flex gap-6">
-              {['about', 'projects', 'contact'].map((section) => (
-                <button
-                  key={section}
-                  onClick={() => scrollToSection(section)}
-                  className={`hover:text-blue-600 dark:hover:text-blue-400 transition-colors ${
-                    activeSection === section
-                      ? 'text-blue-600 dark:text-blue-400 font-semibold'
-                      : ''
-                  }`}
-                >
-                  {section === 'about' && '关于'}
-                  {section === 'projects' && '项目'}
-                  {section === 'contact' && '联系'}
-                </button>
-              ))}
-            </div>
-          </div>
-        </div>
-      </nav>
+    <div className="relative min-h-screen overflow-hidden bg-gradient-to-br from-slate-50 to-slate-100 dark:from-gray-950 dark:to-gray-900">
+      {/* Canvas for balls */}
+      <canvas
+        ref={canvasRef}
+        className="absolute inset-0 w-full h-full"
+      />
 
       {/* Hero Section */}
-      <section
-        id="hero"
-        className="min-h-screen flex items-center justify-center px-6 pt-20"
-      >
+      <section className="relative z-10 min-h-screen flex items-center justify-center px-6">
         <div className="max-w-4xl mx-auto text-center">
           <div className="animate-fade-in">
-            <h1 className="text-6xl md:text-8xl font-bold mb-6 bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
-              你好 👋
+            <h1 className="text-5xl md:text-7xl font-bold mb-6 text-gray-900 dark:text-white">
+              江苏省海门中学
             </h1>
-            <p className="text-2xl md:text-3xl text-gray-600 dark:text-gray-400 mb-8">
-              欢迎来到我的个人主页
+            <p className="text-2xl md:text-3xl text-gray-700 dark:text-gray-300 mb-4">
+              Haimen Middle School
             </p>
-            <p className="text-lg md:text-xl text-gray-500 dark:text-gray-500 max-w-2xl mx-auto">
-              我是一名开发者，热爱创造有趣的项目和探索新技术
+            <p className="text-xl md:text-2xl text-gray-600 dark:text-gray-400">
+              Jiangsu Province
             </p>
-            <div className="mt-12 flex gap-4 justify-center">
-              <button
-                onClick={() => scrollToSection('projects')}
-                className="px-8 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-full font-medium transition-all transform hover:scale-105 shadow-lg"
-              >
-                查看作品
-              </button>
-              <button
-                onClick={() => scrollToSection('contact')}
-                className="px-8 py-3 border-2 border-blue-600 text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-950 rounded-full font-medium transition-all transform hover:scale-105"
-              >
-                联系我
-              </button>
-            </div>
           </div>
         </div>
       </section>
-
-      {/* About Section */}
-      <section
-        id="about"
-        className="min-h-screen flex items-center justify-center px-6 py-20"
-      >
-        <div className="max-w-4xl mx-auto">
-          <h2 className="text-4xl md:text-5xl font-bold mb-12 text-center">
-            关于我
-          </h2>
-          <div className="grid md:grid-cols-2 gap-12">
-            <div className="space-y-6">
-              <p className="text-lg text-gray-600 dark:text-gray-400 leading-relaxed">
-                我是一名充满热情的开发者，专注于创建优雅且实用的 Web 应用。
-              </p>
-              <p className="text-lg text-gray-600 dark:text-gray-400 leading-relaxed">
-                我喜欢学习新技术，解决复杂的问题，并通过代码将创意变为现实。
-              </p>
-              <p className="text-lg text-gray-600 dark:text-gray-400 leading-relaxed">
-                在工作之余，我热衷于开源贡献和技术分享。
-              </p>
-            </div>
-            <div className="space-y-4">
-              <div className="p-6 bg-gray-50 dark:bg-gray-900 rounded-2xl">
-                <h3 className="font-semibold text-xl mb-3">技能</h3>
-                <div className="flex flex-wrap gap-2">
-                  {[
-                    'JavaScript',
-                    'TypeScript',
-                    'React',
-                    'Next.js',
-                    'Node.js',
-                    'Tailwind CSS',
-                    'Git',
-                    'UI/UX',
-                  ].map((skill) => (
-                    <span
-                      key={skill}
-                      className="px-3 py-1 bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200 rounded-full text-sm"
-                    >
-                      {skill}
-                    </span>
-                  ))}
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* Projects Section */}
-      <section
-        id="projects"
-        className="min-h-screen flex items-center justify-center px-6 py-20 bg-gray-50 dark:bg-gray-900"
-      >
-        <div className="max-w-4xl mx-auto w-full">
-          <h2 className="text-4xl md:text-5xl font-bold mb-12 text-center">
-            项目作品
-          </h2>
-          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {projects.map((project, index) => (
-              <div
-                key={index}
-                className="bg-white dark:bg-gray-950 p-6 rounded-2xl shadow-lg hover:shadow-xl transition-all transform hover:-translate-y-1 border border-gray-200 dark:border-gray-800"
-              >
-                <h3 className="text-xl font-bold mb-3">{project.title}</h3>
-                <p className="text-gray-600 dark:text-gray-400 mb-4 text-sm">
-                  {project.description}
-                </p>
-                <div className="flex flex-wrap gap-2 mb-4">
-                  {project.tags.map((tag) => (
-                    <span
-                      key={tag}
-                      className="px-2 py-1 bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 rounded text-xs"
-                    >
-                      {tag}
-                    </span>
-                  ))}
-                </div>
-                {project.link && (
-                  <a
-                    href={project.link}
-                    className="inline-flex items-center text-blue-600 dark:text-blue-400 hover:underline text-sm font-medium"
-                  >
-                    查看详情 →
-                  </a>
-                )}
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* Contact Section */}
-      <section
-        id="contact"
-        className="min-h-screen flex items-center justify-center px-6 py-20"
-      >
-        <div className="max-w-4xl mx-auto text-center">
-          <h2 className="text-4xl md:text-5xl font-bold mb-12">联系方式</h2>
-          <p className="text-xl text-gray-600 dark:text-gray-400 mb-12">
-            欢迎与我交流，一起探讨技术和创意
-          </p>
-          <div className="flex flex-wrap gap-6 justify-center">
-            {socialLinks.map((link) => (
-              <a
-                key={link.name}
-                href={link.url}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="flex items-center gap-3 px-6 py-4 bg-white dark:bg-gray-900 border-2 border-gray-200 dark:border-gray-800 rounded-xl hover:border-blue-600 dark:hover:border-blue-400 transition-all transform hover:scale-105 shadow-md"
-              >
-                <span className="text-2xl">{link.icon}</span>
-                <span className="font-medium">{link.name}</span>
-              </a>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* Footer */}
-      <footer className="py-8 px-6 border-t border-gray-200 dark:border-gray-800">
-        <div className="max-w-4xl mx-auto text-center text-gray-500 dark:text-gray-500">
-          <p>© {new Date().getFullYear()} 个人主页. Built with Next.js & Tailwind CSS</p>
-        </div>
-      </footer>
     </div>
   );
 }
