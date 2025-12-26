@@ -104,12 +104,6 @@ export default function HomePage() {
             const sin = Math.sin(angle);
             const cos = Math.cos(angle);
             
-            // Rotate positions
-            const x1 = 0;
-            const y1 = 0;
-            const x2 = dx * cos + dy * sin;
-            const y2 = dy * cos - dx * sin;
-            
             // Rotate velocities
             let vx1 = ball.vx * cos + ball.vy * sin;
             const vy1 = ball.vy * cos - ball.vx * sin;
@@ -123,16 +117,19 @@ export default function HomePage() {
             vx2 = vxTotal + vx1;
             
             // Update positions to prevent overlap
-            const overlap = ball.radius + otherBall.radius - Math.abs(x2 - x1);
-            const x1Final = x1 + (vx1 < 0 ? -overlap/2 : overlap/2);
-            const x2Final = x2 + (vx2 < 0 ? -overlap/2 : overlap/2);
+            const overlap = ball.radius + otherBall.radius - distance;
+            if (overlap > 0) {
+              const angle = Math.atan2(dy, dx);
+              const moveX = (overlap / 2) * Math.cos(angle);
+              const moveY = (overlap / 2) * Math.sin(angle);
+              
+              ball.x -= moveX;
+              ball.y -= moveY;
+              otherBall.x += moveX;
+              otherBall.y += moveY;
+            }
             
-            // Rotate back
-            otherBall.x = ball.x + (x2Final * cos - y2 * sin);
-            otherBall.y = ball.y + (y2 * cos + x2Final * sin);
-            ball.x = ball.x + (x1Final * cos - y1 * sin);
-            ball.y = ball.y + (y1 * cos + x1Final * sin);
-            
+            // Update velocities
             ball.vx = vx1 * cos - vy1 * sin;
             ball.vy = vy1 * cos + vx1 * sin;
             otherBall.vx = vx2 * cos - vy2 * sin;
