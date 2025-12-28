@@ -120,15 +120,19 @@ export default function P5Canvas() {
             }
           }
 
-          // Draw connecting lines between nearby particles
+          // Draw connecting lines between nearby particles (optimized with squared distance)
+          const maxConnectionDistance = 100;
+          const maxConnectionDistanceSq = maxConnectionDistance * maxConnectionDistance;
+          
           for (let i = 0; i < particles.length; i++) {
             for (let j = i + 1; j < particles.length; j++) {
               const dx = particles[j].position.x - particles[i].position.x;
               const dy = particles[j].position.y - particles[i].position.y;
-              const distance = Math.sqrt(dx * dx + dy * dy);
+              const distanceSq = dx * dx + dy * dy;
               
-              if (distance < 100) {
-                const alpha = p.map(distance, 0, 100, 30, 0);
+              if (distanceSq < maxConnectionDistanceSq) {
+                const distance = Math.sqrt(distanceSq);
+                const alpha = p.map(distance, 0, maxConnectionDistance, 30, 0);
                 p.stroke(particles[i].hue, 60, 100, alpha);
                 p.strokeWeight(1);
                 p.line(
@@ -156,6 +160,7 @@ export default function P5Canvas() {
         };
 
         p.keyPressed = () => {
+          // Clear all particles when any key is pressed
           particles.length = 0;
         };
       };
