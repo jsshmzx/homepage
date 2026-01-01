@@ -3,6 +3,13 @@
 import { useEffect, useRef } from 'react';
 import type p5 from 'p5';
 
+// Extended p5 interface to include touch event handlers
+interface P5WithTouchEvents extends p5 {
+  touchStarted?: () => boolean | void;
+  touchMoved?: () => boolean | void;
+  touchEnded?: () => boolean | void;
+}
+
 interface Ball {
   position: p5.Vector;
   velocity: p5.Vector;
@@ -49,6 +56,8 @@ export default function HomePage() {
       const sketch = (p: p5) => {
         const balls: Ball[] = [];
         const gravity = 0.1;
+        const collisionDamping = 0.3;
+        const throwVelocityMultiplier = 1.5;
         let draggedBall: Ball | null = null;
 
         p.setup = () => {
@@ -114,8 +123,8 @@ export default function HomePage() {
           if (draggedBall) {
             // Calculate velocity based on drag movement
             if (draggedBall.previousPosition) {
-              draggedBall.velocity.x = (draggedBall.position.x - draggedBall.previousPosition.x) * 1.5;
-              draggedBall.velocity.y = (draggedBall.position.y - draggedBall.previousPosition.y) * 1.5;
+              draggedBall.velocity.x = (draggedBall.position.x - draggedBall.previousPosition.x) * throwVelocityMultiplier;
+              draggedBall.velocity.y = (draggedBall.position.y - draggedBall.previousPosition.y) * throwVelocityMultiplier;
             }
             draggedBall.isDragging = false;
             draggedBall = null;
@@ -125,9 +134,10 @@ export default function HomePage() {
         };
 
         // Touch handlers for mobile support
-        (p as any).touchStarted = () => p.mousePressed();
-        (p as any).touchMoved = () => p.mouseDragged();
-        (p as any).touchEnded = () => p.mouseReleased();
+        const p5WithTouch = p as P5WithTouchEvents;
+        p5WithTouch.touchStarted = () => p.mousePressed();
+        p5WithTouch.touchMoved = () => p.mouseDragged();
+        p5WithTouch.touchEnded = () => p.mouseReleased();
 
         p.draw = () => {
           p.clear();
@@ -177,16 +187,15 @@ export default function HomePage() {
                   let vx2 = other.velocity.x * cos + other.velocity.y * sin;
                   const vy2 = other.velocity.y * cos - other.velocity.x * sin;
                   
-                  // Collision reaction with reduced force (0.3 damping factor)
+                  // Collision reaction with reduced force
                   const vxTotal = vx1 - vx2;
                   vx1 = ((ball.radius - other.radius) * vx1 + 2 * other.radius * vx2) / 
                         (ball.radius + other.radius);
                   vx2 = vxTotal + vx1;
                   
                   // Apply damping to reduce collision force
-                  const dampingFactor = 0.3;
-                  vx1 *= dampingFactor;
-                  vx2 *= dampingFactor;
+                  vx1 *= collisionDamping;
+                  vx2 *= collisionDamping;
                   
                   // Update positions to prevent overlap
                   const overlap = ball.radius + other.radius - distance;
