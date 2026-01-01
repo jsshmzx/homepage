@@ -40,6 +40,11 @@ const colors = [
   '#06b6d4', // cyan
 ];
 
+// Type for iOS-specific DeviceOrientationEvent with permission API
+interface DeviceOrientationEventWithPermission {
+  requestPermission?: () => Promise<'granted' | 'denied'>;
+}
+
 export default function HomePage() {
   const containerRef = useRef<HTMLDivElement>(null);
   const p5InstanceRef = useRef<p5 | null>(null);
@@ -55,7 +60,11 @@ export default function HomePage() {
 
       const sketch = (p: p5) => {
         const balls: Ball[] = [];
-        const gravity = 0.1;
+        const baseGravity = 0.1;
+        const gravityMultiplier = 10;
+        const gravityLimitMultiplier = 15;
+        let gravityX = 0;
+        let gravityY = baseGravity;
         const collisionDamping = 0.3;
         const throwVelocityMultiplier = 1.5;
         let draggedBall: Ball | null = null;
@@ -78,6 +87,42 @@ export default function HomePage() {
               isDragging: false,
             });
           }
+
+          // Request device motion permission for iOS 13+
+          const DeviceOrientationEventIOS = DeviceOrientationEvent as unknown as DeviceOrientationEventWithPermission;
+          
+          if (typeof DeviceOrientationEventIOS?.requestPermission === 'function') {
+            // iOS 13+ requires permission
+            DeviceOrientationEventIOS.requestPermission()
+              .then((response: 'granted' | 'denied') => {
+                if (response === 'granted') {
+                  setupDeviceMotion();
+                }
+              })
+              .catch(console.error);
+          } else if (window.DeviceOrientationEvent) {
+            // Non-iOS devices or older iOS versions
+            setupDeviceMotion();
+          }
+        };
+
+        // Setup device motion event listener
+        const setupDeviceMotion = () => {
+          window.addEventListener('deviceorientation', (event) => {
+            if (event.beta !== null && event.gamma !== null) {
+              // beta: tilt front-to-back (-180 to 180)
+              // gamma: tilt left-to-right (-90 to 90)
+              
+              // Convert orientation to gravity
+              // Scale the values appropriately
+              gravityX = (event.gamma / 90) * baseGravity * gravityMultiplier; // Left-right tilt
+              gravityY = (event.beta / 90) * baseGravity * gravityMultiplier;  // Front-back tilt
+              
+              // Clamp gravity values to reasonable range
+              gravityX = p.constrain(gravityX, -baseGravity * gravityLimitMultiplier, baseGravity * gravityLimitMultiplier);
+              gravityY = p.constrain(gravityY, -baseGravity * gravityLimitMultiplier, baseGravity * gravityLimitMultiplier);
+            }
+          });
         };
 
         // Mouse/Touch press handler
@@ -148,20 +193,22 @@ export default function HomePage() {
               // Update position
               ball.position.add(ball.velocity);
 
-              // Add gravity
-              ball.velocity.y += gravity;
+              // Add gravity (use device orientation if available)
+              ball.velocity.x += gravityX;
+              ball.velocity.y += gravityY;
 
-              // Bounce off walls
+              // Bounce off walls (left and right)
               if (ball.position.x + ball.radius > p.width || ball.position.x - ball.radius < 0) {
                 ball.velocity.x *= -0.8;
                 ball.position.x = p.constrain(ball.position.x, ball.radius, p.width - ball.radius);
               }
 
-              // Bounce off floor
-              if (ball.position.y + ball.radius > p.height) {
+              // Bounce off floor and ceiling
+              if (ball.position.y + ball.radius > p.height || ball.position.y - ball.radius < 0) {
                 ball.velocity.y *= -0.7;
-                ball.position.y = p.height - ball.radius;
-                ball.velocity.x *= 0.95; // Add friction
+                ball.position.y = p.constrain(ball.position.y, ball.radius, p.height - ball.radius);
+                // Add friction when hitting horizontal surfaces
+                ball.velocity.x *= 0.95;
               }
             }
 
@@ -256,12 +303,12 @@ export default function HomePage() {
   }, []);
 
   return (
-    <div className="relative min-h-screen overflow-hidden bg-gradient-to-br from-slate-50 to-slate-100 dark:from-gray-950 dark:to-gray-900">
+    <div className="fixed inset-0 overflow-hidden bg-gradient-to-br from-slate-50 to-slate-100 dark:from-gray-950 dark:to-gray-900">
       {/* p5.js Canvas container */}
       <div ref={containerRef} className="absolute inset-0 w-full h-full" />
 
       {/* Hero Section */}
-      <section className="relative z-10 min-h-screen flex items-center justify-center px-6">
+      <section className="relative z-10 h-full flex items-center justify-center px-6">
         <div className="max-w-4xl mx-auto text-center pointer-events-none">
           <div className="animate-fade-in">
             <h1 className="text-5xl md:text-7xl font-bold mb-6 text-gray-900 dark:text-white">
