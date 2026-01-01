@@ -40,6 +40,11 @@ const colors = [
   '#06b6d4', // cyan
 ];
 
+// Type for iOS-specific DeviceOrientationEvent with permission API
+interface DeviceOrientationEventWithPermission {
+  requestPermission?: () => Promise<'granted' | 'denied'>;
+}
+
 export default function HomePage() {
   const containerRef = useRef<HTMLDivElement>(null);
   const p5InstanceRef = useRef<p5 | null>(null);
@@ -56,6 +61,8 @@ export default function HomePage() {
       const sketch = (p: p5) => {
         const balls: Ball[] = [];
         const baseGravity = 0.1;
+        const gravityMultiplier = 10;
+        const gravityLimitMultiplier = 15;
         let gravityX = 0;
         let gravityY = baseGravity;
         const collisionDamping = 0.3;
@@ -82,14 +89,11 @@ export default function HomePage() {
           }
 
           // Request device motion permission for iOS 13+
-          // Type assertion for iOS-specific DeviceOrientationEvent
-          interface DeviceOrientationEventWithPermission {
-            requestPermission?: () => Promise<'granted' | 'denied'>;
-          }
+          const DeviceOrientationEventIOS = DeviceOrientationEvent as unknown as DeviceOrientationEventWithPermission;
           
-          if (typeof (DeviceOrientationEvent as unknown as DeviceOrientationEventWithPermission)?.requestPermission === 'function') {
+          if (typeof DeviceOrientationEventIOS?.requestPermission === 'function') {
             // iOS 13+ requires permission
-            ((DeviceOrientationEvent as unknown as DeviceOrientationEventWithPermission).requestPermission as () => Promise<'granted' | 'denied'>)()
+            DeviceOrientationEventIOS.requestPermission()
               .then((response: 'granted' | 'denied') => {
                 if (response === 'granted') {
                   setupDeviceMotion();
@@ -111,12 +115,12 @@ export default function HomePage() {
               
               // Convert orientation to gravity
               // Scale the values appropriately
-              gravityX = (event.gamma / 90) * baseGravity * 10; // Left-right tilt
-              gravityY = (event.beta / 90) * baseGravity * 10;  // Front-back tilt
+              gravityX = (event.gamma / 90) * baseGravity * gravityMultiplier; // Left-right tilt
+              gravityY = (event.beta / 90) * baseGravity * gravityMultiplier;  // Front-back tilt
               
               // Clamp gravity values to reasonable range
-              gravityX = p.constrain(gravityX, -baseGravity * 15, baseGravity * 15);
-              gravityY = p.constrain(gravityY, -baseGravity * 15, baseGravity * 15);
+              gravityX = p.constrain(gravityX, -baseGravity * gravityLimitMultiplier, baseGravity * gravityLimitMultiplier);
+              gravityY = p.constrain(gravityY, -baseGravity * gravityLimitMultiplier, baseGravity * gravityLimitMultiplier);
             }
           });
         };
