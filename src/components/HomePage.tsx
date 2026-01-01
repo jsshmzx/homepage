@@ -82,21 +82,21 @@ export default function HomePage() {
           }
 
           // Request device motion permission for iOS 13+
-          // Type assertion for iOS-specific DeviceMotionEvent
-          interface DeviceMotionEventWithPermission {
+          // Type assertion for iOS-specific DeviceOrientationEvent
+          interface DeviceOrientationEventWithPermission {
             requestPermission?: () => Promise<'granted' | 'denied'>;
           }
           
-          if (typeof (DeviceMotionEvent as unknown as DeviceMotionEventWithPermission)?.requestPermission === 'function') {
+          if (typeof (DeviceOrientationEvent as unknown as DeviceOrientationEventWithPermission)?.requestPermission === 'function') {
             // iOS 13+ requires permission
-            ((DeviceMotionEvent as unknown as DeviceMotionEventWithPermission).requestPermission as () => Promise<'granted' | 'denied'>)()
+            ((DeviceOrientationEvent as unknown as DeviceOrientationEventWithPermission).requestPermission as () => Promise<'granted' | 'denied'>)()
               .then((response: 'granted' | 'denied') => {
                 if (response === 'granted') {
                   setupDeviceMotion();
                 }
               })
               .catch(console.error);
-          } else if (window.DeviceMotionEvent) {
+          } else if (window.DeviceOrientationEvent) {
             // Non-iOS devices or older iOS versions
             setupDeviceMotion();
           }
@@ -203,11 +203,8 @@ export default function HomePage() {
               if (ball.position.y + ball.radius > p.height || ball.position.y - ball.radius < 0) {
                 ball.velocity.y *= -0.7;
                 ball.position.y = p.constrain(ball.position.y, ball.radius, p.height - ball.radius);
-                
                 // Add friction when hitting horizontal surfaces
-                if (ball.position.y + ball.radius > p.height || ball.position.y - ball.radius < 0) {
-                  ball.velocity.x *= 0.95;
-                }
+                ball.velocity.x *= 0.95;
               }
             }
 
