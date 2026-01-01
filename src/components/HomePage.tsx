@@ -60,8 +60,8 @@ export default function HomePage() {
               position: p.createVector(p.random(p.width), -radius - p.random(500)),
               velocity: p.createVector((p.random() - 0.5) * 2, p.random(2) + 1),
               radius,
-              text: textChars[Math.floor(p.random(textChars.length))],
-              color: colors[Math.floor(p.random(colors.length))],
+              text: textChars[p.floor(p.random(textChars.length))],
+              color: colors[p.floor(p.random(colors.length))],
             });
           }
         };
@@ -94,12 +94,12 @@ export default function HomePage() {
               const other = balls[j];
               const dx = other.position.x - ball.position.x;
               const dy = other.position.y - ball.position.y;
-              const distance = Math.sqrt(dx * dx + dy * dy);
+              const distance = p.dist(ball.position.x, ball.position.y, other.position.x, other.position.y);
               
               if (distance < ball.radius + other.radius) {
-                const angle = Math.atan2(dy, dx);
-                const sin = Math.sin(angle);
-                const cos = Math.cos(angle);
+                const angle = p.atan2(dy, dx);
+                const sin = p.sin(angle);
+                const cos = p.cos(angle);
                 
                 // Rotate velocities
                 let vx1 = ball.velocity.x * cos + ball.velocity.y * sin;
@@ -116,8 +116,8 @@ export default function HomePage() {
                 // Update positions to prevent overlap
                 const overlap = ball.radius + other.radius - distance;
                 if (overlap > 0) {
-                  const moveX = (overlap / 2) * Math.cos(angle);
-                  const moveY = (overlap / 2) * Math.sin(angle);
+                  const moveX = (overlap / 2) * p.cos(angle);
+                  const moveY = (overlap / 2) * p.sin(angle);
                   
                   ball.position.x -= moveX;
                   ball.position.y -= moveY;
