@@ -98,10 +98,10 @@ export default function HomePage() {
               );
               ball.previousPosition = ball.position.copy();
               ball.velocity.set(0, 0);
-              return false; // Prevent default behavior
+              return false; // Prevent default behavior when interacting with ball
             }
           }
-          return false;
+          // Don't prevent default if not clicking on a ball
         };
 
         // Mouse/Touch drag handler
@@ -113,9 +113,9 @@ export default function HomePage() {
               draggedBall.position.x = mousePos.x + draggedBall.dragOffset.x;
               draggedBall.position.y = mousePos.y + draggedBall.dragOffset.y;
             }
-            return false; // Prevent default behavior
+            return false; // Prevent default behavior when dragging
           }
-          return false;
+          // Don't prevent default if not dragging
         };
 
         // Mouse/Touch release handler
@@ -128,9 +128,9 @@ export default function HomePage() {
             }
             draggedBall.isDragging = false;
             draggedBall = null;
-            return false; // Prevent default behavior
+            return false; // Prevent default behavior when releasing dragged ball
           }
-          return false;
+          // Don't prevent default if not releasing a dragged ball
         };
 
         // Touch handlers for mobile support
