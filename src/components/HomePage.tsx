@@ -135,9 +135,9 @@ export default function HomePage() {
 
         // Touch handlers for mobile support
         const p5WithTouch = p as P5WithTouchEvents;
-        p5WithTouch.touchStarted = () => p.mousePressed();
-        p5WithTouch.touchMoved = () => p.mouseDragged();
-        p5WithTouch.touchEnded = () => p.mouseReleased();
+        p5WithTouch.touchStarted = p.mousePressed;
+        p5WithTouch.touchMoved = p.mouseDragged;
+        p5WithTouch.touchEnded = p.mouseReleased;
 
         p.draw = () => {
           p.clear();
