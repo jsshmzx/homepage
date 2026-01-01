@@ -1,10 +1,11 @@
 # 🏫 江苏省海门中学主页
 
-一个使用 Next.js 开发的交互式主页，具有动态落球效果。
+一个使用 Next.js 和 p5.js 开发的交互式主页，具有动态落球效果。
 
 ## 功能特性
 
 - **动态落球动画**：页面加载时，带有文字的彩色球体从顶部落下
+- **p5.js 创意编程**：使用 p5.js 框架实现生成艺术效果
 - **物理引擎**：球体具有重力、弹跳和碰撞效果
 - **响应式设计**：完美适配桌面端和移动端
 - **深色模式支持**：自适应系统主题偏好
@@ -61,7 +62,7 @@ const colors = [
 
 ### 调整球体数量
 
-在 `useEffect` 中修改 `numBalls` 变量：
+在 `setup` 函数中修改 `numBalls` 变量：
 
 ```typescript
 const numBalls = 30; // 调整数量
@@ -73,7 +74,7 @@ const numBalls = 30; // 调整数量
 - [TypeScript](https://www.typescriptlang.org/) - 类型安全
 - [Tailwind CSS 4](https://tailwindcss.com/) - 样式框架
 - [React 19](https://react.dev/) - UI 库
-- HTML5 Canvas - 2D 图形渲染
+- [p5.js](https://p5js.org/) - 创意编程和生成艺术框架
 
 ## 部署
 

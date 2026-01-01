@@ -1,12 +1,11 @@
 'use client';
 
 import { useEffect, useRef } from 'react';
+import type p5 from 'p5';
 
 interface Ball {
-  x: number;
-  y: number;
-  vx: number;
-  vy: number;
+  position: p5.Vector;
+  velocity: p5.Vector;
   radius: number;
   text: string;
   color: string;
@@ -32,151 +31,146 @@ const colors = [
 ];
 
 export default function HomePage() {
-  const canvasRef = useRef<HTMLCanvasElement>(null);
-  const ballsRef = useRef<Ball[]>([]);
-  const animationFrameRef = useRef<number | undefined>(undefined);
+  const containerRef = useRef<HTMLDivElement>(null);
+  const p5InstanceRef = useRef<p5 | null>(null);
 
   useEffect(() => {
-    const canvas = canvasRef.current;
-    if (!canvas) return;
+    if (!containerRef.current || typeof window === 'undefined') return;
 
-    const ctx = canvas.getContext('2d');
-    if (!ctx) return;
+    // Dynamically import p5 only on client side
+    import('p5').then((p5Module) => {
+      const P5 = p5Module.default;
+      
+      if (!containerRef.current) return;
 
-    // Set canvas size
-    const resizeCanvas = () => {
-      canvas.width = window.innerWidth;
-      canvas.height = window.innerHeight;
-    };
-    resizeCanvas();
-    window.addEventListener('resize', resizeCanvas);
+      const sketch = (p: p5) => {
+        const balls: Ball[] = [];
+        const gravity = 0.1;
 
-    // Initialize balls
-    const numBalls = 30;
-    ballsRef.current = Array.from({ length: numBalls }, () => {
-      const radius = 30 + Math.random() * 40;
-      return {
-        x: Math.random() * canvas.width,
-        y: -radius - Math.random() * 500, // Start above screen
-        vx: (Math.random() - 0.5) * 2,
-        vy: Math.random() * 2 + 1,
-        radius,
-        text: textChars[Math.floor(Math.random() * textChars.length)],
-        color: colors[Math.floor(Math.random() * colors.length)],
+        p.setup = () => {
+          p.createCanvas(p.windowWidth, p.windowHeight);
+          p.textAlign(p.CENTER, p.CENTER);
+          p.textFont('Arial');
+          
+          // Initialize balls
+          const numBalls = 30;
+          for (let i = 0; i < numBalls; i++) {
+            const radius = 30 + p.random(40);
+            balls.push({
+              position: p.createVector(p.random(p.width), -radius - p.random(500)),
+              velocity: p.createVector((p.random() - 0.5) * 2, p.random(2) + 1),
+              radius,
+              text: textChars[p.floor(p.random(textChars.length))],
+              color: colors[p.floor(p.random(colors.length))],
+            });
+          }
+        };
+
+        p.draw = () => {
+          p.clear();
+
+          balls.forEach((ball, i) => {
+            // Update position
+            ball.position.add(ball.velocity);
+
+            // Add gravity
+            ball.velocity.y += gravity;
+
+            // Bounce off walls
+            if (ball.position.x + ball.radius > p.width || ball.position.x - ball.radius < 0) {
+              ball.velocity.x *= -0.8;
+              ball.position.x = p.constrain(ball.position.x, ball.radius, p.width - ball.radius);
+            }
+
+            // Bounce off floor
+            if (ball.position.y + ball.radius > p.height) {
+              ball.velocity.y *= -0.7;
+              ball.position.y = p.height - ball.radius;
+              ball.velocity.x *= 0.95; // Add friction
+            }
+
+            // Ball collision detection
+            for (let j = i + 1; j < balls.length; j++) {
+              const other = balls[j];
+              const dx = other.position.x - ball.position.x;
+              const dy = other.position.y - ball.position.y;
+              const distance = p.dist(ball.position.x, ball.position.y, other.position.x, other.position.y);
+              
+              if (distance < ball.radius + other.radius) {
+                const angle = p.atan2(dy, dx);
+                const sin = p.sin(angle);
+                const cos = p.cos(angle);
+                
+                // Rotate velocities
+                let vx1 = ball.velocity.x * cos + ball.velocity.y * sin;
+                const vy1 = ball.velocity.y * cos - ball.velocity.x * sin;
+                let vx2 = other.velocity.x * cos + other.velocity.y * sin;
+                const vy2 = other.velocity.y * cos - other.velocity.x * sin;
+                
+                // Collision reaction
+                const vxTotal = vx1 - vx2;
+                vx1 = ((ball.radius - other.radius) * vx1 + 2 * other.radius * vx2) / 
+                      (ball.radius + other.radius);
+                vx2 = vxTotal + vx1;
+                
+                // Update positions to prevent overlap
+                const overlap = ball.radius + other.radius - distance;
+                if (overlap > 0) {
+                  const moveX = (overlap / 2) * p.cos(angle);
+                  const moveY = (overlap / 2) * p.sin(angle);
+                  
+                  ball.position.x -= moveX;
+                  ball.position.y -= moveY;
+                  other.position.x += moveX;
+                  other.position.y += moveY;
+                }
+                
+                // Update velocities
+                ball.velocity.x = vx1 * cos - vy1 * sin;
+                ball.velocity.y = vy1 * cos + vx1 * sin;
+                other.velocity.x = vx2 * cos - vy2 * sin;
+                other.velocity.y = vy2 * cos + vx2 * sin;
+              }
+            }
+
+            // Draw ball
+            p.push();
+            p.fill(ball.color);
+            p.stroke(255, 255, 255, 80);
+            p.strokeWeight(2);
+            p.circle(ball.position.x, ball.position.y, ball.radius * 2);
+            
+            // Draw text
+            p.fill(255);
+            p.noStroke();
+            p.textSize(ball.radius * 0.8);
+            p.text(ball.text, ball.position.x, ball.position.y);
+            p.pop();
+          });
+        };
+
+        p.windowResized = () => {
+          p.resizeCanvas(p.windowWidth, p.windowHeight);
+        };
       };
+
+      p5InstanceRef.current = new P5(sketch, containerRef.current);
     });
 
-    // Animation loop
-    const animate = () => {
-      ctx.clearRect(0, 0, canvas.width, canvas.height);
-
-      ballsRef.current.forEach((ball) => {
-        // Update position
-        ball.x += ball.vx;
-        ball.y += ball.vy;
-
-        // Add gravity
-        ball.vy += 0.1;
-
-        // Bounce off walls
-        if (ball.x + ball.radius > canvas.width || ball.x - ball.radius < 0) {
-          ball.vx *= -0.8;
-          ball.x = Math.max(ball.radius, Math.min(canvas.width - ball.radius, ball.x));
-        }
-
-        // Bounce off floor
-        if (ball.y + ball.radius > canvas.height) {
-          ball.vy *= -0.7;
-          ball.y = canvas.height - ball.radius;
-          ball.vx *= 0.95; // Add friction
-        }
-
-        // Ball collision detection
-        ballsRef.current.forEach((otherBall) => {
-          if (ball === otherBall) return;
-          
-          const dx = otherBall.x - ball.x;
-          const dy = otherBall.y - ball.y;
-          const distance = Math.sqrt(dx * dx + dy * dy);
-          
-          if (distance < ball.radius + otherBall.radius) {
-            const angle = Math.atan2(dy, dx);
-            const sin = Math.sin(angle);
-            const cos = Math.cos(angle);
-            
-            // Rotate velocities
-            let vx1 = ball.vx * cos + ball.vy * sin;
-            const vy1 = ball.vy * cos - ball.vx * sin;
-            let vx2 = otherBall.vx * cos + otherBall.vy * sin;
-            const vy2 = otherBall.vy * cos - otherBall.vx * sin;
-            
-            // Collision reaction
-            const vxTotal = vx1 - vx2;
-            vx1 = ((ball.radius - otherBall.radius) * vx1 + 2 * otherBall.radius * vx2) / 
-                  (ball.radius + otherBall.radius);
-            vx2 = vxTotal + vx1;
-            
-            // Update positions to prevent overlap
-            const overlap = ball.radius + otherBall.radius - distance;
-            if (overlap > 0) {
-              const angle = Math.atan2(dy, dx);
-              const moveX = (overlap / 2) * Math.cos(angle);
-              const moveY = (overlap / 2) * Math.sin(angle);
-              
-              ball.x -= moveX;
-              ball.y -= moveY;
-              otherBall.x += moveX;
-              otherBall.y += moveY;
-            }
-            
-            // Update velocities
-            ball.vx = vx1 * cos - vy1 * sin;
-            ball.vy = vy1 * cos + vx1 * sin;
-            otherBall.vx = vx2 * cos - vy2 * sin;
-            otherBall.vy = vy2 * cos + vx2 * sin;
-          }
-        });
-
-        // Draw ball
-        ctx.beginPath();
-        ctx.arc(ball.x, ball.y, ball.radius, 0, Math.PI * 2);
-        ctx.fillStyle = ball.color;
-        ctx.fill();
-        ctx.strokeStyle = 'rgba(255, 255, 255, 0.3)';
-        ctx.lineWidth = 2;
-        ctx.stroke();
-
-        // Draw text
-        ctx.fillStyle = 'white';
-        ctx.font = `bold ${ball.radius * 0.8}px Arial`;
-        ctx.textAlign = 'center';
-        ctx.textBaseline = 'middle';
-        ctx.fillText(ball.text, ball.x, ball.y);
-      });
-
-      animationFrameRef.current = requestAnimationFrame(animate);
-    };
-
-    animate();
-
     return () => {
-      window.removeEventListener('resize', resizeCanvas);
-      if (animationFrameRef.current) {
-        cancelAnimationFrame(animationFrameRef.current);
+      if (p5InstanceRef.current) {
+        p5InstanceRef.current.remove();
       }
     };
   }, []);
 
   return (
     <div className="relative min-h-screen overflow-hidden bg-gradient-to-br from-slate-50 to-slate-100 dark:from-gray-950 dark:to-gray-900">
-      {/* Canvas for balls */}
-      <canvas
-        ref={canvasRef}
-        className="absolute inset-0 w-full h-full"
-      />
+      {/* p5.js Canvas container */}
+      <div ref={containerRef} className="absolute inset-0 w-full h-full" />
 
       {/* Hero Section */}
-      <section className="relative z-10 min-h-screen flex items-center justify-center px-6">
+      <section className="relative z-10 min-h-screen flex items-center justify-center px-6 pointer-events-none">
         <div className="max-w-4xl mx-auto text-center">
           <div className="animate-fade-in">
             <h1 className="text-5xl md:text-7xl font-bold mb-6 text-gray-900 dark:text-white">
